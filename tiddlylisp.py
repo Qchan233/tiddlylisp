@@ -112,19 +112,26 @@ def tokenize(s):
 
 def read_from(tokens):
     "Read an expression from a sequence of tokens."
-    if len(tokens) == 0:
+    N = len(tokens)
+    if N == 0:
         raise SyntaxError('unexpected EOF while reading')
-    token = tokens.pop(0)
-    if '(' == token:
-        L = []
-        while tokens[0] != ')':
-            L.append(read_from(tokens))
-        tokens.pop(0) # pop off ')'
-        return L
-    elif ')' == token:
-        raise SyntaxError('unexpected )')
-    else:
-        return atom(token)
+
+    def read_val(idx):
+        match tokens[idx]:
+            case '(':
+                idx += 1
+                L = []
+                while tokens[idx] != ')':
+                    idx, val = read_val(idx)
+                    L.append(val)
+                return idx + 1, L
+            case ')':
+                raise SyntaxError('unexpected )')
+            case _:
+                return idx+1, atom(tokens[idx])
+
+    _, val = read_val(0)
+    return val
 
 def atom(token):
     "Numbers become numbers; every other token is a symbol."
